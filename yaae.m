@@ -27,8 +27,6 @@ static task_t kernel_task = MACH_PORT_NULL;
 static uint64_t kernel_slide = 0;
 static uint64_t trustcache_addr = 0;
 
-// MARK: - Kernel Memory Operations
-
 kern_return_t kernel_read(uint64_t addr, void *data, size_t size) {
     mach_vm_size_t outsize = size;
     return mach_vm_read_overwrite(kernel_task, addr, size, (mach_vm_address_t)data, &outsize);
@@ -42,8 +40,6 @@ uint64_t kalloc(size_t size) {
     mach_vm_allocate(kernel_task, &addr, size, VM_FLAGS_ANYWHERE);
     return addr;
 }
-// MARK: - Kernel Utilities
-
 uint64_t find_kernel_base() {
     size_t size = 0;
     void *ptr = NULL;
@@ -82,8 +78,6 @@ uint64_t find_trustcache() {
     }
     return 0;
 }
-
-// MARK: - TrustCache Injection
 void generate_cdhash(const char *path, uint8_t *cdhash) {
     NSData *fileData = [NSData dataWithContentsOfFile:[NSString stringWithUTF8String:path]];
     if (!fileData) return;
@@ -111,7 +105,6 @@ void inject_to_trustcache(const char *path) {
     }
     kernel_write(trustcache_addr, &new_entry, 8); 
 }
-// MARK: - Kernel Patch Framework (ChiTUIcache Style)
 typedef struct {
     const char *name;
     uint64_t address;
@@ -145,8 +138,6 @@ void apply_kernel_patches() {
         NSLog(@"[+] Patched %s at 0x%llx", patches[i].name, patches[i].address);
     }
 }
-
-// MARK: - PAC Bypass
 void disable_pac_checks() {
     uint64_t pacia_gadget = 0xFFFFFFF007123456;
     uint64_t pacda_gadget = 0xFFFFFFF007654321;
@@ -156,7 +147,6 @@ void disable_pac_checks() {
     kernel_write(pacia_gadget, ret_gadget, sizeof(ret_gadget));
     kernel_write(pacda_gadget, ret_gadget, sizeof(ret_gadget));
 }
-// MARK: - Main Bypass Function
 __attribute__((constructor)) static void entry() {
     NSLog(@"Initializing");
     host_get_special_port(mach_host_self(), HOST_LOCAL_NODE, 4, &kernel_task);
